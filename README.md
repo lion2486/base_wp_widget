@@ -86,3 +86,6 @@ public function widget( $args, $instance ) {
 
 }
 ```   
+
+# Notes
+It is an initial version, more field types will be included and a better handling of the media are in schedule. Thank you.
