@@ -6,7 +6,7 @@ In order to create fast a wordpress widget, without wondering about admin side a
 
 1. Download lion2486-widget.php file.
 2. Include it to your file (with `require_once( __DIR__ . '/lion2486-widget.php' );`).
-3. Extend the class Lion2486_Widget.
+3. Extend the class Lion2486_Widget (like `class Lion2486_Example extends Lion2486_Widget`).
 4. Overwrite class fields $WidgetID, $WidgetName, $WidgetDescription and $textDomain. 
 5. Create a class constructor (`__construct()`) that calls `parent::__construct()` and define your widget fields into `$this->fields` class field as following
  ```
@@ -24,7 +24,8 @@ In order to create fast a wordpress widget, without wondering about admin side a
 );
  ```
 6. Overwrite the method `public function widget( $args, $instance )`  to display your widget with your way!
-7. READY!
+7. Create an object of your class (like `new Lion2486_Example();`).
+8. READY!
 
 For some help see example-widget file.
 
