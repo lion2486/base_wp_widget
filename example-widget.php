@@ -45,7 +45,7 @@ class Lion2486_Example extends Lion2486_Widget{
 			),
 			$this->field(
 				'html',
-				__('Html Body', $this->textDomain),
+				'Html Body',
 				'',
 				'html',
 				'html here...'

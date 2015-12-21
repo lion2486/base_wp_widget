@@ -69,7 +69,7 @@ if( ! class_exists( 'Lion2486_Widget_fieldset' ) ){
 			if( is_array( $type ) ){
 				$this->type = $type['dataType'];
 				$this->attr = array_key_exists( 'attr', $type ) ? $type['attr'] : '';
-				$this->inputTag = array_key_exists( 'intputTag', $type ) ? $type['inputTag'] : '';
+				$this->inputTag = array_key_exists( 'intputTag', $type ) ? $type['inputTag'] : 'input';
 			}else{
 				$this->type = $type;
 				$this->attr = '';
@@ -80,11 +80,11 @@ if( ! class_exists( 'Lion2486_Widget_fieldset' ) ){
 				add_action( 'admin_enqueue_scripts', array( $this, 'enqueueMedia' ) );
 			}
 
-			$this->default = $default;
+			$this->default = apply_filters( 'Lion2486_filter_value', $default );
 			if( ! $value ){
-				$this->value = $default;
+				$this->value = apply_filters( 'Lion2486_filter_value', $default );
 			}else{
-				$this->value = $value;
+				$this->value = apply_filters( 'Lion2486_filter_value', $value );
 			}
 
 		}
@@ -99,8 +99,8 @@ if( ! class_exists( 'Lion2486_Widget_fieldset' ) ){
 		 */
 		public function displayValue( $instance = null ) {
 			$this->value = ( $instance && array_key_exists( $this->name, $instance ) )
-				? $instance[ $this->name ]
-				: $this->value;
+				? apply_filters( 'Lion2486_filter_value', $instance[ $this->name ] )
+				: apply_filters( 'Lion2486_filter_value', $this->value );
 
 			if( empty( $this->value ) )
 				return "";
@@ -149,8 +149,8 @@ if( ! class_exists( 'Lion2486_Widget_fieldset' ) ){
 			//TODO add more configurations
 
 			$this->value = ( $instance && array_key_exists( $this->name, $instance ) )
-				? $instance[ $this->name ]
-				: $this->value;
+				? apply_filters( 'Lion2486_filter_value', $instance[ $this->name ] )
+				: apply_filters( 'Lion2486_filter_value', $this->value );
 
 
 			$fieldHTML = "<label for=\"" . $widget->get_field_id( $this->name ) ."\">{$this->title}</label>";
