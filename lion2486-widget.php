@@ -1,6 +1,22 @@
 <?php
 
+$base_wp_widget_version = 1.01;
+
+if( !defined( 'base_wp_widget_version' ) ){
+	define( 'base_wp_widget_version', $base_wp_widget_version );
+	define( 'base_wp_widget_file', __FILE__  );
+}else if( $base_wp_widget_version >= base_wp_widget_version ){
+	//You have an older version of the file loaded!
+	wp_die('There is an outdated widget library already loaded. The outdated file is: ' . base_wp_widget_file .'\n
+			Please remove it to load the latest version of the base_wp_widget class.');
+}
+
+
+
 if( ! class_exists( 'Lion2486_Widget_fieldset' ) ){
+	/**
+	 * Class Lion2486_Widget_fieldset
+	 */
 	class Lion2486_Widget_fieldset{
 		public $name;       //The name-slug of the field. Unique per widget.
 		public $title;      //The title of the field. It used in the option label.
@@ -152,8 +168,9 @@ if( ! class_exists( 'Lion2486_Widget_fieldset' ) ){
 				? apply_filters( 'Lion2486_filter_value', $instance[ $this->name ] )
 				: apply_filters( 'Lion2486_filter_value', $this->value );
 
+			$field_id = $widget->get_field_id($this->name);
 
-			$fieldHTML = "<label for=\"" . $widget->get_field_id( $this->name ) ."\">{$this->title}</label>";
+			$fieldHTML = "<label for=\"" . $field_id ."\">{$this->title}</label>";
 
 			$add_attrs = true;
 
@@ -179,7 +196,7 @@ if( ! class_exists( 'Lion2486_Widget_fieldset' ) ){
 			}elseif( "wysiwyg" == $this->type){
 
 				$add_attrs = false;
-				wp_editor( $this->value, $widget->get_field_id( $this->name ), array( 'editor_css' => '<style>.js .tmce-active .wp-editor-area { color: black; }</style>' ) );
+				wp_editor( $this->value, $field_id, array( 'editor_css' => '<style>.js .tmce-active .wp-editor-area { color: black; }</style>' ) );
 
 			}elseif( "input" == $this->type ) {
 				$openTag = "<" . $this->inputTag . "
@@ -192,29 +209,36 @@ if( ! class_exists( 'Lion2486_Widget_fieldset' ) ){
 					$image_src = wp_get_attachment_url( $this->value );
 
 				$openTag = "
-					<div class=\"lion2486-image-container\">
-					<div class=\"custom-img-container\">
+					<div id=\"{$field_id}-parent-container\">
+					<div id=\"{$field_id}-img-container\">
 				" .
 
-	           ( ( ! empty( $this->value ) ) ? "<img src=\"{$image_src}\" alt=\"\" style=\"max-width:100%;\" />" : "" )
+	           ( ! empty( $this->value ) ?
+		           ( wp_attachment_is_image( $this->value)
+			           ? "<img src=\"{$image_src}\" alt=\"\" style=\"max-width:100%;\" />"
+		               : "<a href=\"{$image_src}\">" . get_the_title( $this->value ). "</a>"
+		           )
+		           : ""
+
+                )
 
 				. "
 					</div>
 
 					<!-- Your add & remove image links -->
 					<p class=\"hide-if-no-js\">
-					    <a class=\"upload-custom-img " . ( ! empty ( $this->value ) ? 'hidden' : '') . "\"
+					    <a id=\"{$field_id}-upload-img\" class=\"" . ( ! empty ( $this->value ) ? 'hidden' : '') . "\"
 					       href=\"$upload_link\">
-					       Set custom image
+					       Add a file
 					    </a>
-					    <a class=\"delete-custom-img " . ( empty( $this->value ) ? 'hidden' : '') . "\"
+					    <a id=\"{$field_id}-delete-img\" class=\" " . ( empty( $this->value ) ? 'hidden' : '') . "\"
 					      href=\"#\">
-					        Remove this image
+					        Remove this file
 					    </a>
 					</p>
 
 					<!-- A hidden input to set and post the chosen image id -->
-					<input class=\"custom-img-id\" type=\"hidden\" value=\"" . esc_attr( $this->value ) . "\"
+					<input id=\"{$field_id}-img-id\" type=\"hidden\" value=\"" . esc_attr( $this->value ) . "\"
 
 				";
 				$closeTag = "
@@ -225,11 +249,11 @@ if( ! class_exists( 'Lion2486_Widget_fieldset' ) ){
 
 						// Set all variables to be used in scope
 						var frame,
-							metaBox = $('.lion2486-image-container'), // Your meta box id here
-							addImgLink = metaBox.find('.upload-custom-img'),
-							delImgLink = metaBox.find( '.delete-custom-img'),
-							imgContainer = metaBox.find( '.custom-img-container'),
-							imgIdInput = metaBox.find( '.custom-img-id' );
+							metaBox = $('#{$field_id}-parent-container'), // Your meta box id here
+							addImgLink = metaBox.find('#{$field_id}-upload-img'),
+							delImgLink = metaBox.find( '#{$field_id}-delete-img'),
+							imgContainer = metaBox.find( '#{$field_id}-img-container'),
+							imgIdInput = metaBox.find( '#{$field_id}-img-id' );
 
 						// ADD IMAGE LINK
 						addImgLink.on( 'click', function( event ){
@@ -259,7 +283,11 @@ if( ! class_exists( 'Lion2486_Widget_fieldset' ) ){
 								var attachment = frame.state().get('selection').first().toJSON();
 
 								// Send the attachment URL to our custom image input field.
-								imgContainer.append( '<img src=\"'+attachment.url+'\" alt=\"\" style=\"max-width:100%;\"/>' );
+
+								if( attachment.type == \"image\" )
+									imgContainer.append( '<img src=\"'+attachment.url+'\" alt=\"\" style=\"max-width:100%;\"/>' );
+								else
+									imgContainer.append( '<a href=\"'+attachment.url+'\" >' + attachment.title + '</a>' );
 
 								// Send the attachment id to our hidden input
 								imgIdInput.val( attachment.id );
@@ -321,7 +349,7 @@ if( ! class_exists( 'Lion2486_Widget_fieldset' ) ){
 			if( $add_attrs )
 				$fieldHTML .= $openTag . "
 					class=\"widefat\"
-					       id=\"" . $widget->get_field_id( $this->name ) . "\"
+					       id=\"" . $field_id . "\"
 					       name=\"" . $widget->get_field_name( $this->name ) . "\"
 					       $attr
 				" . $closeTag;
@@ -432,6 +460,7 @@ if( ! class_exists( 'Lion2486_Widget' ) ){
 
 		protected function field( $name = '', $title = '', $description = '', $type = 'text',
 			$default = null, $value = null, $textDomain = '' ){
+
 			return new Lion2486_Widget_fieldset(
 				$name,                      //Name of the field
 				$title,                     //Title (auto translation supported)
@@ -443,6 +472,7 @@ if( ! class_exists( 'Lion2486_Widget' ) ){
 					? $textDomain
 					: $this->textDomain     //text-domain to use
 			);
+
 		}
 
 		/**
