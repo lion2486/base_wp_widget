@@ -21,9 +21,10 @@ if( ! class_exists( 'Lion2486_Widget_fieldset' ) ){
 		public $name;       //The name-slug of the field. Unique per widget.
 		public $title;      //The title of the field. It used in the option label.
 		public $description;//The description of the field or instructions.
-		public $type;       //The type of the field. Can be text/textarea/input... //TODO add more
+		public $type;       //The type of the field. Can be text/textarea/input...
 		public $attr;       //Custom attributes for the admin input field
 		public $inputTag;   //The HTML Tag to use with $type="input".
+		public $options;    //All other options passed into type array
 		public $default;    //The default value of the field.
 		public $value;      //The current value of the field.
 		public $textDomain; //The text-domain to use.
@@ -86,6 +87,12 @@ if( ! class_exists( 'Lion2486_Widget_fieldset' ) ){
 				$this->type = $type['dataType'];
 				$this->attr = array_key_exists( 'attr', $type ) ? $type['attr'] : '';
 				$this->inputTag = array_key_exists( 'intputTag', $type ) ? $type['inputTag'] : 'input';
+
+				unset( $type['dataType'] );
+				unset( $type['inputTag'] );
+				unset( $type['attr'] );
+
+				$this->options = $type;
 			}else{
 				$this->type = $type;
 				$this->attr = '';
@@ -161,8 +168,7 @@ if( ! class_exists( 'Lion2486_Widget_fieldset' ) ){
 		public function formField( $widget, $instance = null ) {
 
 			//TODO add apply_filters
-			//TODO display based on $this->type and template
-			//TODO add more configurations
+			//TODO display based on  template
 
 			$this->value = ( $instance && array_key_exists( $this->name, $instance ) )
 				? apply_filters( 'Lion2486_filter_value', $instance[ $this->name ] )
@@ -272,31 +278,60 @@ if( ! class_exists( 'Lion2486_Widget_fieldset' ) ){
 								button: {
 									text: 'Use this media'
 								},
-								multiple: false  // Set to true to allow multiple files to be selected
+								multiple: " . ( ( array_key_exists( 'multiple', $this->options ) && $this->options['multiple'] ) ? "true" : "false" ) ."  // Set to true to allow multiple files to be selected
 							});
 
 
 							// When an image is selected in the media frame...
 							frame.on( 'select', function() {
 
-								// Get media attachment details from the frame state
-								var attachment = frame.state().get('selection').first().toJSON();
+								" . ( ( array_key_exists( 'multiple', $this->options ) && $this->options['multiple'] ) ?
+							//If we allow multiple Files
+						//TODO handle multiple files.
+								"
+								var attachments = frame.state().get('selection').first().toJSON();
 
-								// Send the attachment URL to our custom image input field.
 
-								if( attachment.type == \"image\" )
-									imgContainer.append( '<img src=\"'+attachment.url+'\" alt=\"\" style=\"max-width:100%;\"/>' );
-								else
-									imgContainer.append( '<a href=\"'+attachment.url+'\" >' + attachment.title + '</a>' );
+								$.each ( attachments, function (index) {
+									var attachment = attachments[index];
+
+									if( attachment.type == \"image\" )
+										imgContainer.append( '<div class=\"attachment - file attachment - image\">' +
+										                        '<img src=\"'+attachment.url+'\" alt=\"\" style=\"max - width:100 %;\"/>' +
+										                        '<a href=\"\" onclick=\"jQuery(this).parent().remove();\">Remove Image</a>' +
+									                         '</div>' );
+									else
+										imgContainer.append( '<div class=\"attachment - file attachment - image\">' +
+																'<a href=\"'+attachment.url+'\" >' + attachment.title + '</a>'+
+																'<a href=\"\" onclick=\"jQuery(this).parent().remove();\">Remove File</a>' +
+									                         '</div>' );
+
+
+								});
 
 								// Send the attachment id to our hidden input
 								imgIdInput.val( attachment.id );
 
-								// Hide the add image link
-								addImgLink.addClass( 'hidden' );
-
 								// Unhide the remove image link
 								delImgLink.removeClass( 'hidden' );
+								" :
+							//Or just a single file
+								"
+								var attachment = frame.state().get('selection').first().toJSON();
+								// Send the attachment URL to our custom image input field.
+								if( attachment.type == \"image\" )
+									imgContainer.append( '<img src=\"'+attachment.url+'\" alt=\"\" style=\"max - width:100 %;\"/>' );
+								else
+									imgContainer.append( '<a href=\"'+attachment.url+'\" >' + attachment.title + '</a>' );
+								// Send the attachment id to our hidden input
+								imgIdInput.val( attachment.id );
+								// Hide the add image link
+								addImgLink.addClass( 'hidden' );
+								// Unhide the remove image link
+								delImgLink.removeClass( 'hidden' );
+
+								" ) . "
+
 							});
 
 							// Finally, open the modal on click
@@ -372,7 +407,6 @@ if( ! class_exists( 'Lion2486_Widget_fieldset' ) ){
 		 */
 		public function updateField( &$instance, $new_instance ){
 			//TODO add apply_filters
-			//TODO parse based on $this->type
 			//wp_die( print_r($new_instance, true));
 			$instance[ $this->name ] = ( ! empty( $new_instance[ $this->name ] ) ) ?  $new_instance[ $this->name ] : '';
 
