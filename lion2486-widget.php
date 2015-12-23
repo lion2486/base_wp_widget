@@ -140,13 +140,14 @@ if( ! class_exists( 'Lion2486_Widget_fieldset' ) ){
 				$return .= "<span>{$this->value}</span>";
 			}elseif( "media" == $this->type ){
 				$title = get_the_title( $this->value );
+				$url = wp_get_attachment_url( $this->value );
 
 				//Check what type of media the value is
 				if( wp_attachment_is_image( $this->value ) ){
 					$src = wp_get_attachment_image_src( $this->value );
-					$return .= "<img src=\"{$src[0]}\" alt=\"{$title}\" title=\"{$title}\" />";
+					$return .= "<img src=\"{$url}\" alt=\"{$title}\" title=\"{$title}\" />";
 				}else{
-					$url = wp_get_attachment_url( $this->value );
+
 					$return .= "<a href=\"{$url}\">{$title}</a>";
 				}
 			}else{
@@ -486,7 +487,9 @@ if( ! class_exists( 'Lion2486_Widget' ) ){
 			foreach( $this->fields as $field ){
 				$vars[$field->name] = ( array_key_exists( $field->name, $instance ) && ! empty( $instance[$field->name] ) )
 					? $instance[$field->name]
-					: $field->title;
+					: $field->value;
+
+				$field->value = $vars[ $field->name ];
 			}
 
 			return $vars;
